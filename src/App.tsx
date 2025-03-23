@@ -8,6 +8,7 @@ import Roadmap from './components/Roadmap';
 import Projects from './components/Projects';
 import GovernancePage from './pages/Governance';
 import ValidatorsPage from './pages/Validators';
+import ProjectsPage from './pages/Projects';
 
 const ThemeContext = createContext<{
   isDark: boolean;
@@ -21,7 +22,7 @@ const queryClient = new QueryClient();
 
 function App() {
   const [isDark, setIsDark] = useState(true);
-  const [currentPage, setCurrentPage] = useState<'home' | 'governance' | 'validators'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'governance' | 'validators' | 'projects'>('home');
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -57,6 +58,14 @@ function App() {
               Validators
             </button>
             <button
+              onClick={() => setCurrentPage('projects')}
+              className={`px-4 py-2 rounded-lg ${
+                isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-100 shadow-lg'
+              } transition-colors duration-200`}
+            >
+              Projects
+            </button>
+            <button
               onClick={toggleTheme}
               className={`p-2 rounded-full ${
                 isDark ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700' : 'bg-white text-gray-800 hover:bg-gray-100 shadow-lg'
@@ -69,6 +78,8 @@ function App() {
             <GovernancePage />
           ) : currentPage === 'validators' ? (
             <ValidatorsPage />
+          ) : currentPage === 'projects' ? (
+            <ProjectsPage />
           ) : (
             <>
               <Header />
