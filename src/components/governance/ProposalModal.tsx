@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { XCircle } from 'lucide-react';
-import { format } from 'date-fns';
 import { useTheme } from '../../App';
 import { Proposal, fetchTotalStaked, fetchGovParams } from '../../api/terra';
-import { formatNumber, formatPercentage } from '../../utils/format';
+import { formatNumber } from '../../utils/format';
 import axios from 'axios';
+import ProposalVotingStats from './ProposalVotingStats';
+import ProposalVotingStatus from './ProposalVotingStatus';
+import VotingProgressBar from './VotingProgressBar';
+import ProposalDetails from './ProposalDetails';
 
 interface ProposalModalProps {
   proposal: Proposal;
@@ -42,7 +45,7 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ proposal, onClose }) => {
         ]);
 
         const tallyData = tallyResponse.data.tally;
-        console.log('Tally API response:', tallyData);
+        console.log('Tally API response for proposal #' + proposal.id + ':', tallyData);
 
         setTotalStaked(totalStakedAmount);
         setGovParams({
@@ -51,7 +54,8 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ proposal, onClose }) => {
           vetoThreshold: parseFloat(params.tally_params.veto_threshold)
         });
 
-        // Use the tally data from the API directly
+        // Always use the tally data from the API when available
+        // It's more reliable than the tally stored in the proposal object
         const yes = BigInt(tallyData.yes || '0');
         const no = BigInt(tallyData.no || '0');
         const abstain = BigInt(tallyData.abstain || '0');
@@ -66,24 +70,53 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ proposal, onClose }) => {
         const yesRatio = totalNonAbstain > 0 ? Number(yes) / totalNonAbstain : 0;
         const vetoRatio = totalNonAbstain > 0 ? Number(noWithVeto) / totalNonAbstain : 0;
 
+        // Determine if thresholds are met based on the current values and proposal status
+        const quorumReached = proposal.status === 'PROPOSAL_STATUS_PASSED' || 
+                              (participation >= parseFloat(params.tally_params.quorum));
+        
+        const thresholdReached = proposal.status === 'PROPOSAL_STATUS_PASSED' || 
+                                (yesRatio > parseFloat(params.tally_params.threshold));
+        
+        const vetoThresholdReached = proposal.status === 'PROPOSAL_STATUS_REJECTED' && 
+                                    (vetoRatio > parseFloat(params.tally_params.veto_threshold));
+
         // Update proposal data with the API tally results
         setProposalData({
           ...proposal,
           final_tally_result: {
-            yes: tallyData.yes,
-            no: tallyData.no,
-            abstain: tallyData.abstain,
-            no_with_veto: tallyData.no_with_veto,
+            yes: tallyData.yes || '0',
+            no: tallyData.no || '0',
+            abstain: tallyData.abstain || '0',
+            no_with_veto: tallyData.no_with_veto || '0',
             total_voting_power: totalStakedAmount.toString(),
-            quorum_reached: participation >= parseFloat(params.tally_params.quorum),
-            threshold_reached: yesRatio > parseFloat(params.tally_params.threshold),
-            veto_threshold_reached: vetoRatio > parseFloat(params.tally_params.veto_threshold)
+            quorum_reached: quorumReached,
+            threshold_reached: thresholdReached,
+            veto_threshold_reached: vetoThresholdReached
           }
         });
 
       } catch (error) {
         console.error('Error fetching tally data:', error);
-        setProposalData(proposal);
+        
+        // In case of error, use the proposal's final tally if available,
+        // otherwise use a fallback with zeros
+        if (proposal.final_tally_result) {
+          setProposalData(proposal);
+        } else {
+          setProposalData({
+            ...proposal,
+            final_tally_result: {
+              yes: '0',
+              no: '0',
+              abstain: '0',
+              no_with_veto: '0',
+              total_voting_power: totalStaked.toString(),
+              quorum_reached: false,
+              threshold_reached: false,
+              veto_threshold_reached: false
+            }
+          });
+        }
       }
     };
 
@@ -145,34 +178,6 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ proposal, onClose }) => {
     return totalNonAbstainVotes === 0 ? 0 : (convertToLUNC(parseInt(votes || '0')) / totalNonAbstainVotes) * 100;
   };
 
-  // Determine voting status for display
-  const getVotingStatus = () => {
-    if (!proposalData.final_tally_result.quorum_reached) {
-      return {
-        label: 'Quorum Not Reached',
-        color: isDark ? 'text-red-400' : 'text-red-600'
-      };
-    }
-    if (proposalData.final_tally_result.veto_threshold_reached) {
-      return {
-        label: 'Veto Threshold Exceeded',
-        color: isDark ? 'text-yellow-400' : 'text-yellow-600'
-      };
-    }
-    if (proposalData.final_tally_result.threshold_reached) {
-      return {
-        label: 'Passing Threshold Met',
-        color: isDark ? 'text-green-400' : 'text-green-600'
-      };
-    }
-    return {
-      label: 'Below Passing Threshold',
-      color: isDark ? 'text-red-400' : 'text-red-600'
-    };
-  };
-
-  const votingStatus = getVotingStatus();
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
       <motion.div
@@ -213,204 +218,73 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ proposal, onClose }) => {
         </div>
 
         <div className="p-6 space-y-8">
+          {/* Show voting stats only for active proposals */}
           {proposalData.status === 'PROPOSAL_STATUS_VOTING_PERIOD' && (
-            <>
-              <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 p-4 rounded-lg ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m
-                  </div>
-                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Time Remaining</div>
-                </div>
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                    {formatPercentage(participationRate)}%
-                  </div>
-                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Participation Rate</div>
-                </div>
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                    {formatPercentage(govParams.quorum * 100)}%
-                  </div>
-                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Quorum Required</div>
-                </div>
-                <div className="text-center">
-                  <div className={`text-2xl font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
-                    {formatNumber(totalVotes)} LUNC
-                  </div>
-                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Votes</div>
-                </div>
-              </div>
-
-              <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-                <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Voting Thresholds
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Current Status</span>
-                      <span className={`font-medium ${votingStatus.color}`}>
-                        {votingStatus.label}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Quorum</span>
-                          <span className={proposalData.final_tally_result.quorum_reached ? 'text-green-500' : 'text-red-500'}>
-                            {formatPercentage(participationRate)}% / {formatPercentage(govParams.quorum * 100)}%
-                          </span>
-                        </div>
-                        <div className={`w-full h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                          <div
-                            className={`h-2 rounded-full ${proposalData.final_tally_result.quorum_reached ? 'bg-green-500' : 'bg-red-500'}`}
-                            style={{ width: `${Math.min(100, (participationRate / (govParams.quorum * 100)) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Pass Threshold</span>
-                          <span className={proposalData.final_tally_result.threshold_reached ? 'text-green-500' : 'text-red-500'}>
-                            {formatPercentage(calculateNonAbstainPercentage(proposalData.final_tally_result.yes))}% / {formatPercentage(govParams.threshold * 100)}%
-                          </span>
-                        </div>
-                        <div className={`w-full h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                          <div
-                            className={`h-2 rounded-full ${proposalData.final_tally_result.threshold_reached ? 'bg-green-500' : 'bg-red-500'}`}
-                            style={{ width: `${Math.min(100, (calculateNonAbstainPercentage(proposalData.final_tally_result.yes) / (govParams.threshold * 100)) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Veto Threshold</span>
-                          <span className={!proposalData.final_tally_result.veto_threshold_reached ? 'text-green-500' : 'text-red-500'}>
-                            {formatPercentage(calculateNonAbstainPercentage(proposalData.final_tally_result.no_with_veto))}% / {formatPercentage(govParams.vetoThreshold * 100)}%
-                          </span>
-                        </div>
-                        <div className={`w-full h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                          <div
-                            className={`h-2 rounded-full ${!proposalData.final_tally_result.veto_threshold_reached ? 'bg-green-500' : 'bg-red-500'}`}
-                            style={{ width: `${Math.min(100, (calculateNonAbstainPercentage(proposalData.final_tally_result.no_with_veto) / (govParams.vetoThreshold * 100)) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Votes</span>
-                      <span className={`font-bold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {formatNumber(totalVotes)} LUNC / {formatNumber(totalStakedLUNC)} LUNC staked
-                      </span>
-                    </div>
-                    <div className={`w-full h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                      <div
-                        className={`h-2 rounded-full bg-blue-500`}
-                        style={{ width: `${Math.min(100, participationRate)}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                  {['yes', 'no', 'no_with_veto', 'abstain'].map((voteType) => {
-                    const percentage = calculatePercentage(String(proposalData.final_tally_result[voteType as keyof typeof proposalData.final_tally_result]));
-                    const votes = convertToLUNC(parseInt(String(proposalData.final_tally_result[voteType as keyof typeof proposalData.final_tally_result] || '0')));
-                    return (
-                      <div key={voteType} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-3 h-3 rounded-full ${
-                              voteType === 'yes' ? 'bg-green-500' :
-                              voteType === 'no' ? 'bg-red-500' :
-                              voteType === 'no_with_veto' ? 'bg-yellow-500' :
-                              'bg-gray-500'
-                            }`}></span>
-                            <span className={`capitalize ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                              {voteType.replace(/_/g, ' ')}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                              {formatNumber(votes)} LUNC
-                            </span>
-                            <span className={`w-20 text-right font-bold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                              {formatPercentage(percentage)}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className={`w-full h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                          <div
-                            className={`h-2 rounded-full ${
-                              voteType === 'yes' ? 'bg-green-500' :
-                              voteType === 'no' ? 'bg-red-500' :
-                              voteType === 'no_with_veto' ? 'bg-yellow-500' :
-                              'bg-gray-500'
-                            }`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
+            <ProposalVotingStats 
+              isDark={isDark} 
+              timeLeft={timeLeft} 
+              participationRate={participationRate} 
+              govParams={govParams} 
+              totalVotes={totalVotes} 
+            />
           )}
+
+          {/* Show voting thresholds and results for all proposals */}
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              {proposalData.status === 'PROPOSAL_STATUS_VOTING_PERIOD' ? 'Voting Thresholds' : 'Voting Results'}
+            </h3>
+            <div className="space-y-4">
+              {/* Show voting status for all proposals */}
+              <ProposalVotingStatus 
+                isDark={isDark} 
+                participationRate={participationRate} 
+                govParams={govParams} 
+                finalTallyResult={proposalData.final_tally_result} 
+                calculateNonAbstainPercentage={calculateNonAbstainPercentage} 
+              />
+
+              <div className="mb-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Votes</span>
+                  <span className={`font-bold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {formatNumber(totalVotes)} LUNC / {formatNumber(totalStakedLUNC)} LUNC staked
+                  </span>
+                </div>
+                <div className={`w-full h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                  <div
+                    className={`h-2 rounded-full bg-blue-500`}
+                    style={{ width: `${Math.min(100, participationRate)}%` }}
+                  />
+                </div>
+              </div>
+              
+              {/* Show vote breakdown for all proposals */}
+              {['yes', 'no', 'no_with_veto', 'abstain'].map((voteType) => {
+                const percentage = calculatePercentage(String(proposalData.final_tally_result[voteType as keyof typeof proposalData.final_tally_result]));
+                const votes = convertToLUNC(parseInt(String(proposalData.final_tally_result[voteType as keyof typeof proposalData.final_tally_result] || '0')));
+                return (
+                  <VotingProgressBar
+                    key={voteType}
+                    isDark={isDark}
+                    voteType={voteType}
+                    votes={votes}
+                    percentage={percentage}
+                  />
+                );
+              })}
+            </div>
+          </div>
 
           <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Proposal Details
             </h3>
-            <div className="space-y-4">
-              <div>
-                <h4 className={`text-md font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Description</h4>
-                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {proposalData.content?.description || 'No description available'}
-                </p>
-              </div>
-              <div>
-                <h4 className={`text-md font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Submit Time</h4>
-                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {format(new Date(proposalData.submit_time), 'PPPppp')}
-                </p>
-              </div>
-              <div>
-                <h4 className={`text-md font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Deposit End Time</h4>
-                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {format(new Date(proposalData.deposit_end_time), 'PPPppp')}
-                </p>
-              </div>
-              <div>
-                <h4 className={`text-md font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Voting Start Time</h4>
-                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {format(new Date(proposalData.voting_start_time), 'PPPppp')}
-                </p>
-              </div>
-              <div>
-                <h4 className={`text-md font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Voting End Time</h4>
-                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {format(new Date(proposalData.voting_end_time), 'PPPppp')}
-                </p>
-              </div>
-              <div>
-                <h4 className={`text-md font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Deposit</h4>
-                <div className="space-y-2">
-                  {proposalData.total_deposit.map((deposit, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                        {deposit.denom.replace('uluna', 'LUNC')}
-                      </span>
-                      <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {formatNumber(convertToLUNC(parseInt(deposit.amount)))}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <ProposalDetails 
+              isDark={isDark} 
+              proposal={proposalData} 
+              convertToLUNC={convertToLUNC} 
+            />
           </div>
         </div>
       </motion.div>
