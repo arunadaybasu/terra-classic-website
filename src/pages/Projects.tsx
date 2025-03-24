@@ -388,33 +388,33 @@ const ProjectCard = ({ project, onClick }: { project: typeof projects[0]; onClic
         onClick={onClick}
         className={`w-full text-left ${
           isDark ? 'bg-gray-800/50 hover:bg-gray-800/70' : 'bg-white hover:bg-gray-50'
-        } rounded-xl p-6 shadow-lg backdrop-blur-sm transition-all duration-300 transform hover:scale-[1.02]`}
+        } rounded-xl p-4 sm:p-6 shadow-lg backdrop-blur-sm transition-all duration-300 transform hover:scale-[1.02]`}
       >
-        <div className="flex items-start gap-4">
-          <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-500/10' : 'bg-blue-100'}`}>
-            <project.icon className={`w-6 h-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          <div className={`p-2 sm:p-3 rounded-lg ${isDark ? 'bg-blue-500/10' : 'bg-blue-100'} self-start`}>
+            <project.icon className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xl font-bold">{project.name}</h3>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 className="text-lg sm:text-xl font-bold">{project.name}</h3>
+              <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
                 isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-100 text-blue-600'
               }`}>
                 {project.category}
               </span>
             </div>
             
-            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4`}>
+            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4 line-clamp-2`}>
               {project.description}
             </p>
 
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
               {Object.entries(project.stats).slice(0, 3).map(([key, value]) => (
                 <div key={key}>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
                   </p>
-                  <p className={`text-lg font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <p className={`text-sm sm:text-lg font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                     {value}
                   </p>
                 </div>
@@ -469,15 +469,15 @@ const ProjectsPage = () => {
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className={`relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-yellow-900' : 'bg-gradient-to-br from-blue-100 via-blue-50 to-yellow-50'} py-16`}>
+      <div className={`relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-yellow-900' : 'bg-gradient-to-br from-blue-100 via-blue-50 to-yellow-50'} py-8 sm:py-16`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12">
             <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8 }}
-              className="text-4xl font-bold mb-4"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
             >
               Terra Luna Classic Projects
             </motion.h1>
@@ -485,7 +485,7 @@ const ProjectsPage = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className={`text-xl ${isDark ? 'text-gray-300' : 'text-gray-700'} max-w-3xl mx-auto`}
+              className={`text-base sm:text-lg md:text-xl ${isDark ? 'text-gray-300' : 'text-gray-700'} max-w-3xl mx-auto px-4`}
             >
               Discover the innovative projects building on Terra Luna Classic
             </motion.p>
@@ -495,7 +495,7 @@ const ProjectsPage = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
           >
             {[
               { label: 'Total Projects', value: projects.length, icon: Globe },
@@ -505,25 +505,25 @@ const ProjectsPage = () => {
             ].map((stat, index) => (
               <div
                 key={index}
-                className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-6 backdrop-blur-sm`}
+                className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-4 sm:p-6 backdrop-blur-sm`}
               >
                 <div className="flex items-center gap-3 mb-2">
                   <stat.icon className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                  <h3 className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <h3 className={`text-sm sm:text-base font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                     {stat.label}
                   </h3>
                 </div>
-                <p className="text-3xl font-bold">{stat.value}</p>
+                <p className="text-2xl sm:text-3xl font-bold">{stat.value}</p>
               </div>
             ))}
           </motion.div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Ecosystem Projects</h2>
-          <div className="flex gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold">Ecosystem Projects</h2>
+          <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <button
                 key={category}
@@ -540,7 +540,7 @@ const ProjectsPage = () => {
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {filteredProjects.map((project) => (
             <ProjectCard
               key={project.id}

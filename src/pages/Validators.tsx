@@ -172,14 +172,14 @@ const ValidatorCard = ({ validator, onClick }: { validator: ValidatorWithVotingP
         onClick={onClick}
         className={`w-full text-left ${
           isDark ? 'bg-gray-800/50 hover:bg-gray-800/70' : 'bg-white hover:bg-gray-50'
-        } rounded-xl p-6 shadow-lg backdrop-blur-sm transition-all duration-300 transform hover:scale-[1.02]`}
+        } rounded-xl p-4 sm:p-6 shadow-lg backdrop-blur-sm transition-all duration-300 transform hover:scale-[1.02]`}
       >
-        <div className="flex items-start gap-4">
-          <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-500/10' : 'bg-blue-100'}`}>
-            <Shield className={`w-6 h-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          <div className={`p-2 sm:p-3 rounded-lg ${isDark ? 'bg-blue-500/10' : 'bg-blue-100'} self-start`}>
+            <Shield className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold mb-2">{validator.description.moniker}</h3>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg sm:text-xl font-bold mb-2 line-clamp-1">{validator.description.moniker}</h3>
             <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4 line-clamp-2`}>
               {validator.description.details || 'No description provided'}
             </p>
@@ -202,18 +202,20 @@ const ValidatorCard = ({ validator, onClick }: { validator: ValidatorWithVotingP
                 </div>
               </div>
 
-              <div className="flex justify-between text-sm">
-                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Commission</span>
-                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                  {formatPercentage(parseFloat(validator.commission.commission_rates.rate) * 100)}%
-                </span>
-              </div>
+              <div className="flex flex-col sm:flex-row justify-between text-sm gap-2">
+                <div className="flex justify-between sm:block">
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Commission</span>
+                  <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                    {formatPercentage(parseFloat(validator.commission.commission_rates.rate) * 100)}%
+                  </span>
+                </div>
 
-              <div className="flex justify-between text-sm">
-                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Status</span>
-                <span className={`font-medium ${validator.jailed ? 'text-red-500' : 'text-green-500'}`}>
-                  {validator.jailed ? 'Jailed' : 'Active'}
-                </span>
+                <div className="flex justify-between sm:block">
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Status</span>
+                  <span className={`font-medium ${validator.jailed ? 'text-red-500' : 'text-green-500'}`}>
+                    {validator.jailed ? 'Jailed' : 'Active'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -253,15 +255,15 @@ const ValidatorsHero = ({ validators }: { validators: ValidatorWithVotingPower[]
   };
 
   return (
-    <div className={`relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-yellow-900' : 'bg-gradient-to-br from-blue-100 via-blue-50 to-yellow-50'} py-16`}>
+    <div className={`relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-yellow-900' : 'bg-gradient-to-br from-blue-100 via-blue-50 to-yellow-50'} py-8 sm:py-16`}>
       <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="text-center mb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8 sm:mb-12">
           <motion.h1
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8 }}
-            className="text-4xl font-bold mb-4"
+            className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
           >
             Terra Luna Classic Validators
           </motion.h1>
@@ -269,7 +271,7 @@ const ValidatorsHero = ({ validators }: { validators: ValidatorWithVotingPower[]
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className={`text-xl ${isDark ? 'text-gray-300' : 'text-gray-700'} max-w-3xl mx-auto`}
+            className={`text-base sm:text-lg md:text-xl ${isDark ? 'text-gray-300' : 'text-gray-700'} max-w-3xl mx-auto px-4`}
           >
             Discover the network validators securing and maintaining the Terra Luna Classic blockchain
           </motion.p>
@@ -279,35 +281,43 @@ const ValidatorsHero = ({ validators }: { validators: ValidatorWithVotingPower[]
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 sm:mb-12"
         >
-          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-6 backdrop-blur-sm`}>
+          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-4 sm:p-6 backdrop-blur-sm`}>
             <div className="flex items-center gap-3 mb-2">
               <Shield className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-              <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Total Validators</h3>
+              <h3 className={`text-sm sm:text-base font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                Total Validators
+              </h3>
             </div>
-            <p className="text-3xl font-bold">{stats.totalValidators}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{stats.totalValidators}</p>
           </div>
-          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-6 backdrop-blur-sm`}>
+          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-4 sm:p-6 backdrop-blur-sm`}>
             <div className="flex items-center gap-3 mb-2">
               <Activity className={`w-5 h-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
-              <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Active Validators</h3>
+              <h3 className={`text-sm sm:text-base font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                Active Validators
+              </h3>
             </div>
-            <p className="text-3xl font-bold">{stats.activeValidators}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{stats.activeValidators}</p>
           </div>
-          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-6 backdrop-blur-sm`}>
+          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-4 sm:p-6 backdrop-blur-sm`}>
             <div className="flex items-center gap-3 mb-2">
               <Wallet className={`w-5 h-5 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
-              <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Avg. Commission</h3>
+              <h3 className={`text-sm sm:text-base font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                Avg. Commission
+              </h3>
             </div>
-            <p className="text-3xl font-bold">{stats.averageCommission}%</p>
+            <p className="text-2xl sm:text-3xl font-bold">{stats.averageCommission}%</p>
           </div>
-          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-6 backdrop-blur-sm`}>
+          <div className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-4 sm:p-6 backdrop-blur-sm`}>
             <div className="flex items-center gap-3 mb-2">
               <Lock className={`w-5 h-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
-              <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Total Staked</h3>
+              <h3 className={`text-sm sm:text-base font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                Total Staked
+              </h3>
             </div>
-            <p className="text-3xl font-bold">{formatLargeNumber(stats.totalStaked)} LUNC</p>
+            <p className="text-2xl sm:text-3xl font-bold">{formatLargeNumber(stats.totalStaked)} LUNC</p>
           </div>
         </motion.div>
 
@@ -339,17 +349,19 @@ const ValidatorsHero = ({ validators }: { validators: ValidatorWithVotingPower[]
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-6 backdrop-blur-sm`}
+            className={`${isDark ? 'bg-gray-800/30' : 'bg-white'} rounded-xl p-4 sm:p-6 backdrop-blur-sm`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-xl font-bold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Top Validator</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+              <h3 className={`text-lg sm:text-xl font-bold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                Top Validator
+              </h3>
               <div className={`px-3 py-1 rounded-full text-xs font-medium ${
                 validators[0].jailed ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
               }`}>
                 {validators[0].jailed ? 'Jailed' : 'Active'}
               </div>
             </div>
-            <h4 className="text-lg font-medium mb-2">{validators[0].description.moniker}</h4>
+            <h4 className="text-base sm:text-lg font-medium mb-2">{validators[0].description.moniker}</h4>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between mb-1">
@@ -408,9 +420,9 @@ const ValidatorsPage = () => {
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <ValidatorsHero validators={validators || []} />
       
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Network Validators</h2>
+          <h2 className="text-xl sm:text-2xl font-bold">Network Validators</h2>
           <div className="flex gap-2">
             <button
               onClick={() => setFilter('all')}
@@ -445,7 +457,7 @@ const ValidatorsPage = () => {
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {filteredValidators?.map((validator) => (
             <ValidatorCard
               key={validator.operator_address}
