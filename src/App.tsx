@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Moon, Sun, Menu, X } from 'lucide-react';
 import Header from './components/Header';
@@ -24,6 +24,28 @@ function App() {
   const [isDark, setIsDark] = useState(true);
   const [currentPage, setCurrentPage] = useState<'home' | 'governance' | 'validators' | 'projects'>('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Enable smooth scrolling to validators section from home page
+  useEffect(() => {
+    if (currentPage === 'home') {
+      const handleHashChange = () => {
+        if (window.location.hash === '#validators') {
+          setCurrentPage('validators');
+        }
+      };
+      
+      window.addEventListener('hashchange', handleHashChange);
+      
+      // Check if hash is present on initial load
+      if (window.location.hash === '#validators') {
+        setCurrentPage('validators');
+      }
+      
+      return () => {
+        window.removeEventListener('hashchange', handleHashChange);
+      };
+    }
+  }, [currentPage]);
 
   const toggleTheme = () => {
     setIsDark(!isDark);

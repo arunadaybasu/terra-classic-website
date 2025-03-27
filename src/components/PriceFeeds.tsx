@@ -104,7 +104,7 @@ const PriceFeeds = () => {
   );
 
   return (
-    <section className={`py-16 ${isDark ? 'bg-gray-900/50' : 'bg-gradient-to-b from-blue-50 to-yellow-50'}`}>
+    <section id="priceFeeds" className="py-16 scroll-mt-16">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className={`${isDark ? 'bg-gray-800/50' : 'bg-white shadow-lg'} rounded-2xl p-8 backdrop-blur-sm`}>
